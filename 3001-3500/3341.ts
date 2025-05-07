@@ -1,68 +1,40 @@
-function minTimeToReach(moveTime: number[][]): number {
-    const UP = [-1, 0];
-    const DOWN = [1, 0];
-    const LEFT = [0, -1];
-    const RIGHT = [0, 1];
+const DIRECTIONS = [0, 1, 0, -1, 0];
 
-    this.MOVES = [UP, DOWN, LEFT, RIGHT];
+const minTimeToReach = (grid: number[][]): number => {
+    const rows = grid.length;
+    const cols = grid[0].length;
 
-    this.rows = moveTime.length;
-    this.columns = moveTime[0].length;
+    // Min-heap priority queue: [arrivalTime, x, y]
+    const queue = new PriorityQueue<[number, number, number]>((a, b) => a[0] - b[0]);
+    queue.push([0, 0, 0]); // Start at (0, 0) at time 0
 
-    this.startRow = 0;
-    this.startColumn = 0;
+    while (queue.size()) {
+        const [currentTime, x, y] = queue.pop();
 
-    this.targetRow = this.rows - 1;
-    this.targetColumn = this.columns - 1;
+        // Skip already visited cells
+        if (grid[y][x] === -1) continue;
 
-    return dijkstraSearchForPathWithMinTime(moveTime);
-};
-
-class Step {
-
-    row: number;
-    column: number;
-    timeFromStart;
-
-    constructor(row, column, timeFromStart) {
-        this.row = row;
-        this.column = column;
-        this.timeFromStart = timeFromStart;
-    }
-}
-
-function dijkstraSearchForPathWithMinTime(moveTime: number[][]): number {
-    const minHeapForTime = new MinPriorityQueue({ compare: (x, y) => x.timeFromStart - y.timeFromStart });
-    minHeapForTime.enqueue(new Step(this.startRow, this.startColumn, 0));
-
-    const minTimeMatrix: number[][] = Array.from(new Array(this.rows), () => new Array(this.columns).fill(Number.MAX_SAFE_INTEGER));
-    minTimeMatrix[this.startRow][this.startColumn] = 0;
-
-    while (!minHeapForTime.isEmpty()) {
-        const current = minHeapForTime.dequeue();
-        if (current.row === this.targetRow && current.column === this.targetColumn) {
-            break;
+        // Reached target cell
+        if (x === cols - 1 && y === rows - 1) {
+            return Math.max(grid[y][x], currentTime);
         }
 
-        for (let move of this.MOVES) {
-            const nextRow = current.row + move[0];
-            const nextColumn = current.column + move[1];
-            if (!isInMatrix(nextRow, nextColumn)) {
-                continue;
-            }
+        // Mark cell as visited
+        grid[y][x] = -1;
 
-            const nextValueForTime = Math.max(1 + current.timeFromStart, 1 + moveTime[nextRow][nextColumn]);
+        // Check all 4 adjacent cells
+        for (let i = 0; i < 4; i++) {
+            const newX = x + DIRECTIONS[i];
+            const newY = y + DIRECTIONS[i + 1];
 
-            if (minTimeMatrix[nextRow][nextColumn] > nextValueForTime) {
-                minTimeMatrix[nextRow][nextColumn] = nextValueForTime;
-                minHeapForTime.enqueue(new Step(nextRow, nextColumn, nextValueForTime));
-            }
+            if (newX < 0 || newX >= cols || newY < 0 || newY >= rows) continue;
+
+            // Wait until the new cell is available, then move in 1 second
+            const nextTime = Math.max(currentTime, grid[newY][newX]) + 1;
+            queue.push([nextTime, newX, newY]);
         }
     }
 
-    return minTimeMatrix[this.targetRow][this.targetColumn];
-}
-
-function isInMatrix(row: number, column: number): boolean {
-    return row >= 0 && row < this.rows && column >= 0 && column < this.columns;
+    // Unreachable
+    return -1;
 }
