@@ -1,0 +1,68 @@
+function maxDifference(s: string, k: number): number {
+    const n = s.length;
+    let res = -1e9;
+
+    for (let ai = 0; ai <= 4; ai++) {
+        for (let bi = 0; bi <= 4; bi++) {
+            if (ai === bi) continue;
+
+            const a = ai.toString();
+            const b = bi.toString();
+
+            const d: number[] = Array(n + 1).fill(0);
+            const pa: number[] = Array(n + 1).fill(0);
+            const cb: number[] = Array(n + 1).fill(0);
+
+            for (let i = 1; i <= n; i++) {
+                const c = s[i - 1];
+                d[i] = d[i - 1] + (c === a ? 1 : 0) - (c === b ? 1 : 0);
+                pa[i] = pa[i - 1] ^ (c === a ? 1 : 0);
+                cb[i] = cb[i - 1] + (c === b ? 1 : 0);
+            }
+
+            const lst: number[][][] = Array.from({ length: 2 }, () =>
+                Array.from({ length: 2 }, () => [])
+            );
+            const pm: number[][][] = Array.from({ length: 2 }, () =>
+                Array.from({ length: 2 }, () => [])
+            );
+
+            for (let j = k; j <= n; j++) {
+                const i = j - k;
+                const ai = pa[i], bi = cb[i] % 2;
+                lst[ai][bi].push(cb[i]);
+                if (pm[ai][bi].length > 0) {
+                    pm[ai][bi].push(Math.min(pm[ai][bi][pm[ai][bi].length - 1], d[i]));
+                } else {
+                    pm[ai][bi].push(d[i]);
+                }
+
+                const aj = pa[j], bj = cb[j] % 2;
+                const na = 1 - aj, nb = bj;
+                const arr = lst[na][nb];
+                if (arr.length > 0) {
+                    const T = cb[j] - 2;
+                    let h = upperBound(arr, T) - 1;
+                    if (h >= 0) {
+                        res = Math.max(res, d[j] - pm[na][nb][h]);
+                    }
+                }
+            }
+        }
+    }
+
+    return res;
+}
+
+function upperBound(arr: number[], target: number): number {
+    let low = 0, high = arr.length;
+    while (low < high) {
+        let mid = (low + high) >> 1;
+        if (arr[mid] <= target) {
+            low = mid + 1;
+        } else {
+            high = mid;
+        }
+    }
+    return low;
+}
